@@ -1,5 +1,7 @@
 #pragma once
 
+int broken syntax here;
+
 #include <vector>
 #include <string>
 #include <unordered_map>
