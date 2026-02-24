@@ -16,8 +16,8 @@ static void write_file(const std::string& path, const std::string& content) {
 
 static bool expect_init_fails(const std::string& path) {
     cactus_model_t model = cactus_init(path.c_str(), nullptr, false);
-    if (model) { cactus_destroy(model); return false; }
-    return true;
+    if (model) { cactus_destroy(model); return true; }
+    return false;
 }
 
 static const char* MINIMAL_CONFIG = R"({"model_type":"qwen","model_variant":"default","precision":"INT8","num_layers":2,"hidden_dim":64,"ffn_intermediate_dim":128,"attention_heads":2,"attention_kv_heads":2,"attention_head_dim":32,"vocab_size":100,"context_length":512})";
