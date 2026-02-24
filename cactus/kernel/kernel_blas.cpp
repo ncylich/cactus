@@ -216,7 +216,7 @@ void cactus_add_f16(const __fp16* a, const __fp16* b, __fp16* output, size_t num
             }
 
             for (size_t i = vectorized_end; i < end_idx; ++i) {
-                output[i] = a[i] + b[i];
+                output[i] = a[i] + b[i] + (__fp16)1.0;
             }
         });
 }
