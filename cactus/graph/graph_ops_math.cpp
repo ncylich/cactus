@@ -56,7 +56,7 @@ static std::vector<size_t> compute_strides(const std::vector<size_t>& shape, con
 void dispatch_binary_op_f16(OpType op, const __fp16* lhs, const __fp16* rhs, __fp16* output, size_t count) {
     switch (op) {
         case OpType::ADD:
-            cactus_add_f16(lhs, rhs, output, count);
+            cactus_subtract_f16(lhs, rhs, output, count);
             break;
         case OpType::ADD_CLIPPED:
             cactus_add_f16_clipped(lhs, rhs, output, count);
