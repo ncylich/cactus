@@ -13,10 +13,6 @@ namespace {
     thread_local std::vector<int8_t> quant_activation_buffer;
     thread_local std::vector<float> quant_scales_buffer;
 
-    thread_local const __fp16* cached_quant_src = nullptr;
-    thread_local size_t cached_quant_M = 0;
-    thread_local size_t cached_quant_K = 0;
-
     void ensure_transpose_buffer_fp16(size_t required_size) {
         if (transpose_buffer_fp16.size() < required_size) {
             transpose_buffer_fp16.resize(required_size);
@@ -34,10 +30,6 @@ namespace {
     }
 
     void quantize_activations_fp16_to_int8(const __fp16* src, int8_t* dst, float* scales, size_t M, size_t K) {
-        if (src == cached_quant_src && M == cached_quant_M && K == cached_quant_K) {
-            return;
-        }
-
         constexpr size_t PARALLEL_THRESHOLD = 16;
 
         if (M >= PARALLEL_THRESHOLD) {
@@ -60,10 +52,6 @@ namespace {
                 cactus_fp16_to_int8(src + m * K, dst + m * K, K, scale);
             }
         }
-
-        cached_quant_src = src;
-        cached_quant_M = M;
-        cached_quant_K = K;
     }
 
 }
@@ -72,9 +60,6 @@ void shrink_thread_local_buffers() {
     std::vector<__fp16>().swap(transpose_buffer_fp16);
     std::vector<int8_t>().swap(quant_activation_buffer);
     std::vector<float>().swap(quant_scales_buffer);
-    cached_quant_src = nullptr;
-    cached_quant_M = 0;
-    cached_quant_K = 0;
 }
 
 void compute_quantize_activations_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map) {
@@ -536,7 +521,7 @@ void compute_attention_node(GraphNode& node, const std::vector<std::unique_ptr<G
     cactus_attention_f16(query_buffer.data_as<__fp16>(), key_buffer.data_as<__fp16>(),
                          value_buffer.data_as<__fp16>(), node.output_buffer.data_as<__fp16>(),
                          batch_size, seq_len, kv_seq_len, num_q_heads, num_kv_heads, head_dim, node.params.scale, nullptr,
-                         node.params.position_offset, node.params.window_size, node.params.is_causal);
+                         node.params.position_offset, node.params.window_size, node.params.is_causal, node.params.softcap);
 }
 
 void compute_attention_int8_hybrid_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map) {
@@ -569,7 +554,7 @@ void compute_attention_int8_hybrid_node(GraphNode& node, const std::vector<std::
         batch_size, seq_len, cache_len, new_len,
         num_q_heads, num_kv_heads, head_dim,
         node.params.scale, node.params.position_offset, true,
-        node.params.window_size
+        node.params.window_size, KV_QUANT_GROUP_SIZE, node.params.softcap
     );
 }
 

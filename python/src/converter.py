@@ -101,13 +101,12 @@ def convert_hf_model_weights(model, output_dir, precision='INT8', args=None):
                 save_tensor_with_header(state_dict[name], output_dir / file_name, precision, stats_tracker=quantization_stats, args=args, model_type=detected_model_type)
                 saved_tensor_full_names.add(name)
 
-    if not tie_word_embeddings or is_vlm:
-        for name in OUTPUT_NAMES:
-            if name in state_dict:
-                tensor = state_dict[name]
-                save_tensor_with_header(tensor, output_dir / "output_weight.weights", precision, transpose=False, stats_tracker=quantization_stats, args=args, model_type=detected_model_type)
-                saved_tensor_full_names.add(name)
-                break
+    for name in OUTPUT_NAMES:
+        if name in state_dict:
+            tensor = state_dict[name]
+            save_tensor_with_header(tensor, output_dir / "output_weight.weights", precision, transpose=False, stats_tracker=quantization_stats, args=args, model_type=detected_model_type)
+            saved_tensor_full_names.add(name)
+            break
 
     for name in OUTPUT_NORM_NAMES:
         if name in state_dict:

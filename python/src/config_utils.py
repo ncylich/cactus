@@ -55,7 +55,9 @@ def detect_model_type(cfg, config, output_dir=None):
     """Detect the model architecture type from config."""
     model_type_str = cfg_get(cfg, 'model_type', cfg_get(config, 'model_type', '')).lower()
 
-    if 'gemma' in model_type_str:
+    if 'gemma2' in model_type_str:
+        return 'gemma2'
+    elif 'gemma' in model_type_str:
         return 'gemma'
     elif 'lfm2' in model_type_str:
         return 'lfm2'
@@ -105,6 +107,9 @@ def extract_base_config(cfg, config):
         'num_top_experts': num_experts_per_tok,
         'num_experts_per_tok': num_experts_per_tok,
         'moe_every_n_layers': cfg_get(cfg, 'moe_every_n_layers', 0),
+        'attn_logit_softcap': float(cfg_get(cfg, 'attn_logit_softcapping', 0.0) or 0.0),
+        'final_logit_softcap': float(cfg_get(cfg, 'final_logit_softcapping', 0.0) or 0.0),
+        'query_pre_attn_scalar': int(cfg_get(cfg, 'query_pre_attn_scalar', 0) or 0),
     }
 
 

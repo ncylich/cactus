@@ -371,13 +371,14 @@ void cactus_attention_f16(
     const __fp16* mask,
     size_t position_offset,
     size_t window_size,
-    bool is_causal
+    bool is_causal,
+    float softcap
 ) {
     if (scale == 0.0f) {
         scale = 1.0f / sqrtf(static_cast<float>(head_dim));
     }
     
-    if (head_dim == 64 && mask == nullptr && window_size == 0) {
+    if (head_dim == 64 && mask == nullptr && window_size == 0 && softcap == 0.0f) {
         cactus_attention_f16_h64(
             queries, keys, values, output,
             batch_size, seq_len, kv_seq_len,
@@ -508,7 +509,11 @@ void cactus_attention_f16(
                             }
                             
                             score *= scale;
-                            
+
+                            if (softcap > 0.0f) {
+                                score = softcap * tanhf(score / softcap);
+                            }
+
                             size_t absolute_q_pos = position_offset + q_pos;
 
                             if (is_causal && kv_pos > absolute_q_pos) {
@@ -639,18 +644,18 @@ void cactus_attention_f16(
 }
 
 void cactus_attention_hybrid_int8_fp16(
-    const __fp16* queries,    
-    const int8_t* keys_cached, 
-    const int8_t* values_cached, 
-    const float* k_scales,   
-    const float* v_scales, 
-    const __fp16* keys_new,  
-    const __fp16* values_new, 
+    const __fp16* queries,
+    const int8_t* keys_cached,
+    const int8_t* values_cached,
+    const float* k_scales,
+    const float* v_scales,
+    const __fp16* keys_new,
+    const __fp16* values_new,
     __fp16* output,
     size_t batch_size,
     size_t seq_len,
-    size_t cache_len,    
-    size_t new_len,   
+    size_t cache_len,
+    size_t new_len,
     size_t num_q_heads,
     size_t num_kv_heads,
     size_t head_dim,
@@ -658,7 +663,8 @@ void cactus_attention_hybrid_int8_fp16(
     size_t position_offset,
     bool is_causal,
     size_t window_size,
-    size_t quant_group_size
+    size_t quant_group_size,
+    float softcap
 ) {
     if (scale == 0.0f) {
         scale = 1.0f / sqrtf(static_cast<float>(head_dim));
@@ -786,6 +792,9 @@ void cactus_attention_hybrid_int8_fp16(
                         }
 
                         float score = vaddvq_f32(vaddq_f32(score_accum_low, score_accum_high)) * scale;
+                        if (softcap > 0.0f) {
+                            score = softcap * tanhf(score / softcap);
+                        }
                         block_scores[kv_idx] = score;
                         block_max = std::max(block_max, score);
                     }

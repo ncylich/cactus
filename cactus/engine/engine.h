@@ -63,6 +63,9 @@ struct Config {
     bool use_expert_bias = false;
     float routed_scaling_factor = 1.0f;
     bool tie_word_embeddings = true;
+    float attn_logit_softcap = 0.0f;
+    float final_logit_softcap = 0.0f;
+    uint32_t query_pre_attn_scalar = 0;
 
     uint32_t vision_hidden_dim = 0;
     uint32_t vision_num_layers = 0;
@@ -100,7 +103,7 @@ struct Config {
     uint32_t num_decoder_layers = 0;
     float partial_rotary_factor = 0.0f;
 
-    enum class ModelType {QWEN = 0, GEMMA = 1, NOMIC = 3, LFM2 = 5, SIGLIP2 = 6, WHISPER = 7, MOONSHINE = 8, SILERO_VAD = 9};
+    enum class ModelType {QWEN = 0, GEMMA = 1, GEMMA2 = 2, NOMIC = 3, LFM2 = 5, SIGLIP2 = 6, WHISPER = 7, MOONSHINE = 8, SILERO_VAD = 9};
     ModelType model_type = ModelType::QWEN;
 
     enum class ModelVariant {DEFAULT = 0, VLM = 1, EXTRACT = 2, RAG = 3};

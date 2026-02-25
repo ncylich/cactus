@@ -138,7 +138,7 @@ def save_tensor_with_header(tensor, output_path, precision='INT8', transpose=Fal
 
     original_data = data.copy()
 
-    if model_type == 'gemma' and 'norm' in str(output_path):
+    if model_type in ('gemma', 'gemma2') and 'norm' in str(output_path):
         data = data + 1.0
         original_data = data.copy()
 
